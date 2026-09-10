@@ -167,6 +167,113 @@ git stash pop
 
 `-u` includes untracked files, but not ignored files. `pop` reapplies the latest stash and removes it if successful. If applying it causes conflicts, resolve them; Git retains the stash, so inspect it before dropping it. A stash is local temporary storage, not a GitHub backup. See the [stash reference](https://git-scm.com/docs/git-stash).
 
+## Example 7: Manage several saved stashes
+
+You paused a menu redesign yesterday and a contact form today. Find yesterday's work:
+
+```sh
+git stash list
+git stash show -p -u 'stash@{1}'
+```
+
+`stash@{0}` is newest. Numbers change after adding or removing entries; check the list before each operation. Quotes work in bash and zsh. `show -p -u` includes the patch and saved untracked files.
+
+With a clean working directory on the intended branch, restore yesterday's work while retaining its stash:
+
+```sh
+git stash apply 'stash@{1}'
+```
+
+Use `apply --index` to also restore staging. After reviewing, testing, and committing the restored work, check the list and delete that saved entry:
+
+```sh
+git stash list
+git stash drop 'stash@{1}'
+```
+
+If intervening commits make an old stash difficult to apply, start from its original base:
+
+```sh
+git stash branch recover/menu-redesign 'stash@{0}'
+```
+
+This creates and switches branches, restores the work, and drops the stash on success. Commit before integrating the recovered branch.
+
+To pause only your stylesheet experiment:
+
+```sh
+git stash push -m "Try alternate menu colors" -- styles.css
+```
+
+Other changes remain. `git stash clear` deletes **every stash**; use it only when none are needed. Neither `drop` nor `clear` has a simple undo. See the [stash command reference](https://git-scm.com/docs/git-stash).
+
+## Example 8: Choose exactly what to add
+
+You changed a bug fix and a redesign in the same tracked file. Stage selected chunks for a focused commit:
+
+```sh
+git add -p styles.css
+git diff --staged
+git commit -m "Fix mobile menu overlap"
+```
+
+At the prompts, `y` stages a chunk, `n` skips it, `s` splits it when possible, and `q` stops. Unselected edits remain for later.
+
+| Command | Practical use |
+| --- | --- |
+| `git add README.md docs/git-basics.md` | Include only the two files belonging to your documentation update. |
+| `git add -- "Class Notes.md"` | Handle a filename containing spaces; `--` ends options. |
+| `git add -u` | Stage modifications and deletions of tracked files across the repository, leaving new files untracked. |
+| `git add -A` | Stage additions, modifications, and deletions across the repository. |
+| `git add .` | Stage changes under the current directory; at the repository root this covers the project. |
+| `git add -n .` | Preview which paths would be added without staging them. |
+
+For a completed assignment, `git add -A` can be convenient. First inspect `git status --short`, then inspect `git diff --staged` afterward. Ignored files are normally excluded; already tracked files remain tracked even after adding ignore rules. See the [add reference](https://git-scm.com/docs/git-add).
+
+## Example 9: Commit faster with `git commit -am`
+
+You fixed a typo in an already tracked README:
+
+```sh
+git status --short
+git diff
+git diff --staged
+git commit -am "Fix setup instructions"
+```
+
+`-a` automatically stages modified and deleted **tracked files throughout the repository**; `-m` supplies the message. It also commits anything already staged. It does **not** discover new untracked files.
+
+If your update adds a new guide, stage it explicitly:
+
+```sh
+git add docs/new-guide.md
+git commit -am "Add guide and update existing links"
+```
+
+Use this shortcut only when all tracked edits belong together. For mixed tasks or partially staged files, use plain `git commit -m` to preserve your selection. Preview automatic staging with `git commit --dry-run -a`.
+
+You can add a message body explaining why:
+
+```sh
+git commit -m "Clarify SSH setup" -m "Explain which key to upload so students can finish authentication."
+```
+
+For your latest **unpushed** commit, correct its message:
+
+```sh
+git commit --amend -m "Correct SSH setup instructions"
+```
+
+Or include a forgotten file while keeping the message:
+
+```sh
+git add docs/new-guide.md
+git diff --staged
+git commit --amend --no-edit
+```
+
+Amend includes staged changes and replaces the last commit. Once shared, prefer a follow-up commit. See the [commit reference](https://git-scm.com/docs/git-commit).
+
 ## A routine to practice
 
 Start by checking your branch and updating it appropriately. Make one focused change, review the diff, stage the relevant files, inspect the staged diff, commit with a useful message, and push. Open a pull request when working with a team. Use `git status` whenever you are unsure what happens next.
